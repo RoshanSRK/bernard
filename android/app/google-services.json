@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "44973295880",
+    "project_id": "bernard-e224e",
+    "storage_bucket": "bernard-e224e.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:44973295880:android:b23dd793f9b54a209284bd",
+        "android_client_info": {
+          "package_name": "com.example.bernard"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "44973295880-7ag3vcbr6kmm53j14evgttdbp8pbt6p0.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAFOhzMfsI4BCg9XsQ_Xb6eGg-QzTibiSk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "44973295880-7ag3vcbr6kmm53j14evgttdbp8pbt6p0.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
