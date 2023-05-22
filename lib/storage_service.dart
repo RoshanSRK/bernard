@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:ui';
+import 'package:bernard/basket.dart';
 import 'package:firebase_core/firebase_core.dart' as firebase_core;
 import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 
@@ -27,9 +28,27 @@ class Storage {
   }
 
   Future<String> downloadURL(String imageName) async {
+    print(imageName);
     String downloadURL = await storage.ref('test/$imageName').getDownloadURL();
+    print(downloadURL);
     return downloadURL;
   }
+
+  Future<List<Item>> assignURL(List<Item> items) async {
+    String downloadUrl;
+    String imageName;
+
+    for (Item item in items) {
+      imageName = item.imageName;
+      // print(imageName);
+      downloadUrl = await storage.ref('test/$imageName').getDownloadURL();
+      // print(downloadURL);
+      item.imageUrl = downloadUrl;
+    }
+    return items;
+  }
+
+
 
   Future<List<String>> getDownloadURLs() async {
     List<String> downloadURLs = [];

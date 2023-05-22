@@ -1,8 +1,11 @@
 import 'package:bernard/storage_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter/material.dart';
 import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
+import 'package:flutter/material.dart';
+
+import 'basket.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -34,6 +37,41 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  List<Item> basketItems = [];
+
+  @override
+  void initState() {
+    fetchRecords();
+    FirebaseFirestore.instance
+        .collection('basket_items')
+        .snapshots()
+        .listen((records) {
+      mapRecords(records);
+    });
+    super.initState();
+  }
+
+  fetchRecords() async {
+    var records =
+        await FirebaseFirestore.instance.collection('basket_items').get();
+    mapRecords(records);
+  }
+
+  mapRecords(QuerySnapshot<Map<String, dynamic>> records) {
+    var _list = records.docs
+        .map((item) => Item(
+            id: item.id,
+            name: item['name'],
+            quantity: item['quantity'],
+            imageName: item['imageName'],
+            imageUrl: ''))
+        .toList();
+
+    setState(() {
+      basketItems = _list;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     Storage storage = Storage();
@@ -41,35 +79,36 @@ class _HomePageState extends State<HomePage> {
         appBar: AppBar(
           title: Text('Cloud Storage'),
         ),
-        body: Column(
+        body: SingleChildScrollView(
+            child: Column(
           children: [
             Center(
                 child: ElevatedButton(
-                  onPressed: () async {
-                    final results = await FilePicker.platform.pickFiles(
-                      allowMultiple: false,
-                      type: FileType.custom,
-                      allowedExtensions: ['png', 'jpg'],
-                    );
-                    if (results == null) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('No file selected.')),
-                      );
-                      return null;
-                    }
+              onPressed: () async {
+                final results = await FilePicker.platform.pickFiles(
+                  allowMultiple: false,
+                  type: FileType.custom,
+                  allowedExtensions: ['png', 'jpg'],
+                );
+                if (results == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('No file selected.')),
+                  );
+                  return null;
+                }
 
-                    final path = results.files.single.path!;
-                    final fileName = results.files.single.name;
+                final path = results.files.single.path!;
+                final fileName = results.files.single.name;
 
-                    // print(path);
-                    // print(fileName);
+                // print(path);
+                // print(fileName);
 
-                    storage
-                        .uploadFile(path, fileName)
-                        .then((value) => print('Done.'));
-                  },
-                  child: Text('Upload file'),
-                )),
+                storage
+                    .uploadFile(path, fileName)
+                    .then((value) => print('Done.'));
+              },
+              child: Text('Upload file'),
+            )),
             FutureBuilder(
                 future: storage.listFiles(),
                 builder: (BuildContext context,
@@ -87,7 +126,7 @@ class _HomePageState extends State<HomePage> {
                               return ElevatedButton(
                                   onPressed: () {},
                                   child:
-                                  Text(snapshot.data!.items[index].name));
+                                      Text(snapshot.data!.items[index].name));
                             }));
                   }
 
@@ -99,8 +138,8 @@ class _HomePageState extends State<HomePage> {
                 }),
             FutureBuilder(
                 future: storage.downloadURL('Snapchat-601650972.jpg'),
-                builder: (BuildContext context,
-                    AsyncSnapshot<String> snapshot) {
+                builder:
+                    (BuildContext context, AsyncSnapshot<String> snapshot) {
                   if (snapshot.connectionState == ConnectionState.done &&
                       snapshot.hasData) {
                     return Container(
@@ -109,8 +148,7 @@ class _HomePageState extends State<HomePage> {
                         child: Image.network(
                           snapshot.data!,
                           fit: BoxFit.cover,
-                        )
-                    );
+                        ));
                   }
 
                   if (snapshot.connectionState == ConnectionState.waiting &&
@@ -135,28 +173,82 @@ class _HomePageState extends State<HomePage> {
                             itemBuilder: (BuildContext context, int index) {
                               return ElevatedButton(
                                   onPressed: () {},
-                                  child:
-                                  Image.network(
+                                  child: Image.network(
                                     urlList.data![index],
                                     fit: BoxFit.cover,
-                                  )
-                              );
-                            }
-                            )
-                    );
-
+                                  ));
+                            }));
                   }
 
                   if (urlList.connectionState == ConnectionState.waiting &&
-                  !urlList.hasData) {
-                  return CircularProgressIndicator();
+                      !urlList.hasData) {
+                    return CircularProgressIndicator();
                   }
-                  return
-                  Container
-                  (
-                  );
+                  return Container();
+                }),
+
+            //basket_items
+            FutureBuilder(
+                future: storage.assignURL(basketItems),
+                builder: (BuildContext context,
+                    AsyncSnapshot<List<Item>> basketItemsR) {
+                  if (basketItemsR.connectionState == ConnectionState.done &&
+                      basketItemsR.hasData) {
+                    return Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        height: 500,
+                        width: 500,
+                        child: ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            shrinkWrap: true,
+                            itemCount: basketItemsR.data!.length,
+                            itemBuilder: (BuildContext context, int index) {
+                              return Column(children: [
+                                SizedBox(
+                                    width: 350,
+                                    height: 400,
+                                    child: Image.network(
+                                        basketItemsR.data!
+                                            .elementAt(index)
+                                            .imageUrl,
+                                        fit: BoxFit.cover)),
+                                Text(basketItemsR.data!.elementAt(index).name),
+                                Text(basketItemsR.data!
+                                        .elementAt(index)
+                                        .quantity ??
+                                    ''),
+                              ]);
+
+                              // return SizedBox(
+                              //   height: 300,
+                              //    child: ListTile(
+                              //       leading: SizedBox(
+                              //           width: 50, // Set the desired width
+                              //           height: 50, // Set the desired height
+                              //           child: Image.network(basketItemsR.data!
+                              //               .elementAt(index)
+                              //               .imageUrl
+                              //           )
+                              //       ),
+                              //       title: Text(basketItemsR.data!
+                              //           .elementAt(index)
+                              //           .name),
+                              //       subtitle: Text(basketItemsR.data!
+                              //           .elementAt(index)
+                              //           .quantity ??
+                              //           ''),
+                              //     )
+                              // );
+                            }));
+                  }
+
+                  if (basketItemsR.connectionState == ConnectionState.waiting &&
+                      !basketItemsR.hasData) {
+                    return CircularProgressIndicator();
+                  }
+                  return Container();
                 }),
           ],
-        ));
+        )));
   }
 }
